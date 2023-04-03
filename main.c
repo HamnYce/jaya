@@ -102,7 +102,7 @@ n_vector *mutate_n_vector(n_vector *orig, n_vector **best_worst_vecs) {
 
   for (int i = 0; i < DIM; i++) {
     *(mutated_vec->x + i) = *(orig->x + i) +
-                            *(r1->x + i) * (*(best->x + i) - *(orig->x + i)) +
+                            *(r1->x + i) * (*(best->x + i) - *(orig->x + i)) -
                             *(r2->x + i) * (*(worst->x + i) - *(orig->x + i));
   }
 
@@ -151,7 +151,7 @@ n_vector **greedy_combine_population(n_vector **old, n_vector **new) {
 int main() {
   srand(time(NULL));
   int range[] = {-10, 10};
-  int n = 100;
+  int n = 10;
 
   int sol_size = 4;
   n_vector **population = rand_population(range[0], range[1]);
