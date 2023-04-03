@@ -5,10 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-typedef struct {
-  double x;
-  double y;
-} sol_vector;
+#define DIM 2
+#define POP_SIZE 4
 
 double rand_double(double min, double max) {
   double r = (double)rand() / (double)RAND_MAX;
@@ -19,82 +17,119 @@ double rand_double(double min, double max) {
   return offsetted_r;
 }
 
-double loss_function(sol_vector *sol) {
-  return pow(sol->x, 2) * pow(sol->y, 2);
+typedef struct {
+  double *x; // values of vector
+} n_vector;
+
+void free_n_vector(n_vector *vec) {
+  free(vec->x);
+  free(vec);
 }
 
-sol_vector *rand_sol_vector(double min, double max) {
-  sol_vector *sol = malloc(sizeof(sol_vector));
-  sol->x = rand_double(min, max);
-  sol->y = rand_double(min, max);
-  return sol;
+void free_population(n_vector **pop) {
+  for (int i = 0; i < POP_SIZE; i++) {
+    free_n_vector(*(pop + i));
+  }
+  free(pop);
 }
 
-sol_vector *rand_population(double min, double max, int size) {
-  sol_vector *population = malloc(sizeof(sol_vector) * size);
-  while (--size)
-    *(population + size) = *rand_sol_vector(min, max);
+double sphere_loss_function(n_vector *vec) {
+  return pow(*(vec->x), 2) + pow(*(vec->x + 1), 2);
+}
+
+n_vector *inited_n_vector() {
+  n_vector *init_vec = malloc(sizeof(n_vector));
+
+  init_vec->x = malloc(sizeof(double) * DIM);
+
+  for (int i = 0; i < DIM; i++) {
+    *(init_vec->x + i) = 0;
+  }
+
+  return init_vec;
+}
+
+n_vector *rand_n_vector(double min, double max) {
+  n_vector *r_vector = inited_n_vector();
+
+  for (int i = 0; i < DIM; i++) {
+    *(r_vector->x + i) = rand_double(min, max);
+  }
+
+  return r_vector;
+}
+
+n_vector **best_worst_n_vectors(n_vector **pop) {
+  double smallest = DBL_MAX;
+  double largest = DBL_MIN;
+
+  n_vector **best_worst_vecs = malloc(sizeof(n_vector *) * 2);
+
+  for (int i = 0; i < POP_SIZE; i++) {
+    double loss = sphere_loss_function(*(pop + i));
+
+    if (loss < smallest) {
+      smallest = loss;
+      *(best_worst_vecs) = *(pop + i);
+    }
+    if (loss > largest) {
+      largest = loss;
+      *(best_worst_vecs + 1) = *(pop + i);
+    }
+  }
+
+  return best_worst_vecs;
+}
+
+n_vector *mutate_n_vector(n_vector *orig, n_vector **best_worst_vecs) {
+  n_vector *mutated_vec = inited_n_vector();
+
+  n_vector *r1 = rand_n_vector(0, 1);
+  n_vector *r2 = rand_n_vector(0, 1);
+
+  n_vector *best = *best_worst_vecs;
+  n_vector *worst = *(best_worst_vecs + 1);
+
+  for (int i = 0; i < DIM; i++) {
+    *(mutated_vec->x + i) = *(orig->x + i) +
+                            *(r1->x + i) * (*(best->x + i) - *(orig->x + i)) +
+                            *(r2->x + i) * (*(worst->x + i) - *(orig->x + i));
+  }
+
+  free_n_vector(r1);
+  free_n_vector(r2);
+
+  return mutated_vec;
+}
+
+n_vector **rand_population(double min, double max) {
+  n_vector **population = malloc(sizeof(n_vector *) * POP_SIZE);
+
+  for (int i = 0; i < POP_SIZE; i++) {
+    *(population + i) = rand_n_vector(min, max);
+  }
 
   return population;
 }
 
-sol_vector *best_worst_sol_vectors(sol_vector *population, int size) {
-  double smallest = DBL_MAX;
-  double largest = DBL_MIN;
-  sol_vector *best_worst_sol = malloc(sizeof(sol_vector) * 2);
+n_vector **mutate_population(n_vector **pop, n_vector **best_worst_vecs) {
+  n_vector **mutated_pop = malloc(sizeof(n_vector *) * POP_SIZE);
 
-  while (--size) {
-    if (loss_function(population + size) > largest) {
-      largest = loss_function(population + size);
-      *(best_worst_sol) = *(population + size);
-    } else if (loss_function(population + size) < smallest) {
-      largest = loss_function(population + size);
-      *(best_worst_sol + 1) = *(population + size);
-    }
-  }
-  return best_worst_sol;
-}
-
-sol_vector *mutate_sol_vector(sol_vector *orig_sol,
-                              sol_vector *best_worst_sol) {
-  sol_vector *mutated_sol = malloc(sizeof(sol_vector));
-  sol_vector *r1 = rand_sol_vector(0, 1);
-  sol_vector *r2 = rand_sol_vector(0, 1);
-  sol_vector *best = best_worst_sol;
-  sol_vector *worst = (best_worst_sol + 1);
-
-  double mutated_x = orig_sol->x + r1->x * (best->x - orig_sol->x) +
-                     r2->x * (worst->x - orig_sol->x);
-  double mutated_y = orig_sol->y + r1->y * (best->y - orig_sol->y) +
-                     r2->y * (worst->y - orig_sol->y);
-
-  mutated_sol->x = mutated_x;
-  mutated_sol->y = mutated_y;
-
-  return mutated_sol;
-}
-
-sol_vector *mutate_population(sol_vector *population,
-                              sol_vector *best_worst_sol, int size) {
-  sol_vector *mutated_population = malloc(sizeof(sol_vector) * size);
-
-  while (--size) {
-    *(mutated_population + size) =
-        *mutate_sol_vector((population + size), best_worst_sol);
+  for (int i = 0; i < POP_SIZE; i++) {
+    *(mutated_pop + i) = mutate_n_vector(*(pop + i), best_worst_vecs);
   }
 
-  return mutated_population;
+  return mutated_pop;
 }
 
-sol_vector *greedy_combine_populations(sol_vector *old_population,
-                                       sol_vector *new_population, int size) {
+n_vector **greedy_combine_population(n_vector **old, n_vector **new) {
+  n_vector **combined_population = malloc(sizeof(n_vector *) * POP_SIZE);
 
-  sol_vector *combined_population = malloc(sizeof(sol_vector) * size);
-  while (--size) {
-    *(combined_population + size) = loss_function(old_population + size) <
-                                            loss_function(new_population + size)
-                                        ? *(old_population + size)
-                                        : *(new_population + size);
+  for (int i = 0; i < POP_SIZE; i++) {
+    *(combined_population + i) =
+        sphere_loss_function(*(old + i)) < sphere_loss_function(*(new + i))
+            ? *(old + i)
+            : *(new + i);
   }
 
   return combined_population;
@@ -102,20 +137,22 @@ sol_vector *greedy_combine_populations(sol_vector *old_population,
 
 int main() {
   srand(time(NULL));
-  printf("Hello World\n");
   int range[] = {-10, 10};
+  int n = 100;
 
   int sol_size = 4;
-  sol_vector *population = rand_population(-10, 10, 4);
+  n_vector **population = rand_population(range[0], range[1]);
+  n_vector **best_worst_vecs;
 
-  int n = 10;
   while (n--) {
-    sol_vector *best_worst_sol = best_worst_sol_vectors(population, sol_size);
-    printf("%f\n", loss_function(best_worst_sol));
-    sol_vector *mutated_population =
-        mutate_population(population, best_worst_sol, sol_size);
-    population = greedy_combine_populations(population, mutated_population, sol_size);
-  }
+    best_worst_vecs = best_worst_n_vectors(population);
+    if (1) {
+      printf("%i: %.10f %.10f\n", n, sphere_loss_function(*(best_worst_vecs)),
+             sphere_loss_function(*(best_worst_vecs + 1)));
+    }
+    n_vector **mutated_pop = mutate_population(population, best_worst_vecs);
 
+    population = greedy_combine_population(population, mutated_pop);
+  }
   return 0;
 }
