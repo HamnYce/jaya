@@ -49,6 +49,16 @@ n_vector *inited_n_vector() {
   return init_vec;
 }
 
+n_vector *copy_n_vector(n_vector *old) {
+  n_vector *copy_vec = inited_n_vector();
+
+  for (int i = 0; i < DIM; i++) {
+    *(copy_vec->x + i) = *(old->x + i);
+  }
+
+  return copy_vec;
+}
+
 n_vector *rand_n_vector(double min, double max) {
   n_vector *r_vector = inited_n_vector();
 
@@ -126,11 +136,14 @@ n_vector **greedy_combine_population(n_vector **old, n_vector **new) {
   n_vector **combined_population = malloc(sizeof(n_vector *) * POP_SIZE);
 
   for (int i = 0; i < POP_SIZE; i++) {
-    *(combined_population + i) =
+    *(combined_population + i) = copy_n_vector(
         sphere_loss_function(*(old + i)) < sphere_loss_function(*(new + i))
             ? *(old + i)
-            : *(new + i);
+            : *(new + i));
   }
+
+  free_population(old);
+  free_population(new);
 
   return combined_population;
 }
