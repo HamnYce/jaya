@@ -5,8 +5,9 @@
 #include <time.h>
 
 // make these arguments
-#define D 100
-#define POP_S 100
+#define D 1000
+#define POP_S 1000
+#define MAXFE 1000000
 #define LOWER_B -10.0
 #define UPPER_B 10.0
 
@@ -36,6 +37,8 @@ void free_vec(double *vec) { free(vec); }
 void free_pop(double **pop) {
   for (int i = 0; i < POP_S; i++)
     free_vec(pop[i]);
+
+  free(pop);
 }
 
 double sphere(double *vec) {
@@ -184,33 +187,35 @@ double **jaya(double (*loss_func)(double *vec), int n) {
     mutated_fit_range = range(mutated_fit);
 
     new_pop = combine(pop, mutated_pop, fit, mutated_fit);
+
     solutions[i] = fit_range;
 
-    // free_vec(fit);
-    // free_vec(mutated_fit);
-    // free_pop(pop);
-    // free_pop(mutated_pop);
+    free_vec(fit);
+    free_vec(mutated_fit);
+    free_pop(pop);
+    free_pop(mutated_pop);
 
     pop = new_pop;
   }
-
-  printf("popsample:\n");
-  for (int i = 0; i < D; i++) {
-    printf("%f ", pop[0][i]);
-  }
-  puts("");
   return solutions;
 }
 
 int main(int argc, char **argv) {
   srand(time(NULL));
 
-  int n = 10000;
+  // we will use the maximumFunction evaluation, D and the population size to
+  // dictate the number of iterations we will do.
+  // the loss function is carried on each member of a population x times
+  // then on the mutated version of that population.
+  // therefore it is carried out POP_S * 2 times per iteration
+  // FE == 2 * POP_S * (n)
+  // therefore n = FE / (2 * POP_S)
+  int n = MAXFE / (2 * POP_S);
   double **solutions = jaya(sphere, n);
 
-  // for (int i = 0; i < n; i++) {
-  //   printf("best:%f worst:%f\n", solutions[i][0], solutions[i][1]);
-  // }
+  for (int i = n - 10; i < n; i++) {
+    printf("best:%f worst:%f\n", solutions[i][0], solutions[i][1]);
+  }
 
   printf("best:%f worst:%f\n", solutions[n - 1][0], solutions[n - 1][1]);
   return 0;
