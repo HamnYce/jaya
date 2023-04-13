@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
   int n = MAXFE / (2 * POP_S);
   double *solution = jaya(sphere, n);
 
-  FILE *out = fopen("res.out", "w");
+  FILE *out = fopen("output/res.out", "w");
   for (int i = 0; i < n; i++) {
     fprintf(out, "%10.20f\n", solution[i]);
   }
