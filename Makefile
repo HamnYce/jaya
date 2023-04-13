@@ -1,6 +1,6 @@
-all: better run
+all: compile run
 
-better:
+compile:
 	gcc better.c -o bin/better
 
 run:
