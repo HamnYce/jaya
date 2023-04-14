@@ -12,12 +12,10 @@ void find_best_worst(pop_t *pop);
 void mutate_pop(pop_t *pop, pop_t *mutated_pop);
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
-double *jaya(double (*loss_func)(double *vec), int n);
-
 void *threaded_loss_func(void *args) {
   pop_t *arg = (pop_t *)args;
 
-  for (int i = arg->start; i < arg->start + SPAN; i++) {
+  for (int i = arg->start; i < arg->start + span; i++) {
     arg->fit[i] = arg->loss_func(arg->pop_vec[i]);
   }
 
@@ -25,19 +23,19 @@ void *threaded_loss_func(void *args) {
 }
 
 void calc_fitness(pop_t *pop) {
-  pthread_t *ths = malloc(K * sizeof(pthread_t));
-  pop->fit = malloc(POP_S * sizeof(double));
+  pthread_t *ths = malloc(k * sizeof(pthread_t));
+  pop->fit = malloc(pop_s * sizeof(double));
 
-  pop_t *pops = malloc(K * sizeof(pop_t));
-  for (int i = 0; i < K; i++) {
+  pop_t *pops = malloc(k * sizeof(pop_t));
+  for (int i = 0; i < k; i++) {
     pops[i].pop_vec = pop->pop_vec;
     pops[i].fit = pop->fit;
-    pops[i].start = i * POP_S / K;
+    pops[i].start = i * pop_s / k;
     pops[i].loss_func = pop->loss_func;
     pthread_create(ths + i, NULL, threaded_loss_func, pops + i);
   }
 
-  for (int i = 0; i < K; i++) {
+  for (int i = 0; i < k; i++) {
     pthread_join(ths[i], NULL);
   }
 
@@ -45,11 +43,12 @@ void calc_fitness(pop_t *pop) {
 }
 
 // returns a list of the solutions
-double *jaya(double (*loss_func)(double *vec), int n) {
+double *jaya(double (*loss_func)(double *vec)) {
   srand(time(NULL) * 1000);
   double *solutions = malloc(n * sizeof(double));
   pop_t *pop, *mutated_pop;
 
+  span = pop_s / k;
   pop = malloc(sizeof(pop_t));
   mutated_pop = malloc(sizeof(pop_t));
 
@@ -77,18 +76,35 @@ double *jaya(double (*loss_func)(double *vec), int n) {
 
 int main(int argc, char **argv) {
 
-  // the loss function is calculated once for every vector
-  // in the population during the mutation step
+ if (argc != 5) {
+    puts("Please enter 4 arguments to this program:");
+    puts("Population");
+    puts("Dimension size");
+    puts("Max loss function evaluation count");
+    puts("K (number of sub-populations)");
+    puts("Respectively");
+    exit(1);
+  }
 
-  int n = MAXFE / POP_S;
-  double *solution = jaya(sphere, n);
+  pop_s = atoi(argv[1]);
+  d = atoi(argv[2]);
+  maxfe = atoi(argv[3]);
+  k = atoi(argv[4]);
 
-  FILE *out = fopen("output/kpop.out", "w");
+  n = maxfe / pop_s;
+
+  double *solution = jaya(sphere);
+
+  char* output_file_name = malloc(100 * sizeof(char));
+  sprintf(output_file_name, "output/kpop_pop_s_%i_d_%i.out", pop_s, d);
+
+  FILE *out = fopen(output_file_name, "w");
   for (int i = 0; i < n; i++) {
     fprintf(out, "%10.20f\n", solution[i]);
   }
   fclose(out);
 
   printf("final:%f\n", solution[n - 1]);
+
   return 0;
 }
