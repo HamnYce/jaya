@@ -1,4 +1,5 @@
 #ifndef HELPER
+#define HELPER
 
 #define B 30.0
 
