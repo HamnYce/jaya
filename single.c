@@ -15,58 +15,9 @@ void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
 double *jaya(double (*loss_func)(double *vec), int n);
 
-void init_pop(pop_t *pop, double (*loss_func)(double *vec)) {
-  pop->pop_vec = malloc(POP_S * sizeof(double *));
-
-  for (int i = 0; i < POP_S; i++) {
-    pop->pop_vec[i] = malloc(D * sizeof(double));
-  }
-
-  pop->fit = malloc(POP_S * sizeof(double));
-  pop->loss_func = loss_func;
-}
-
-void rand_pop(pop_t *pop) {
-  for (int i = 0; i < POP_S;i++) {
-    for (int j = 0;j < D; j++) {
-      pop->pop_vec[i][j] = rand_double(-B, B);
-    }
-  }
-}
-
 void calc_fitness(pop_t *pop) {
   for (int i = 0; i < POP_S; i++) {
     pop->fit[i] = pop->loss_func(pop->pop_vec[i]);
-  }
-}
-
-void mutate_pop(pop_t *pop, pop_t *mutated_pop) {
-  for (int i = 0; i < POP_S; i++)
-    mutate(pop, mutated_pop, i);
-}
-
-void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i) {
-  for (int i = 0; i < D; i++) {
-    pop->pop_vec[vec_i][i] = better_pop->pop_vec[vec_i][i];
-  }
-
-  pop->fit[vec_i] = better_pop->fit[vec_i];
-}
-
-void combine_into_pop(pop_t *pop1, pop_t *pop2) {
-
-  // TODO: DRY this up
-  pop1->best =
-      pop1->fit[pop1->best] <= pop2->fit[pop2->best] ? pop1->best : pop2->best;
-
-  pop1->worst = pop1->fit[pop1->worst] <= pop2->fit[pop2->worst] ? pop1->worst
-                                                                 : pop2->worst;
-
-  for (int i = 0; i < POP_S; i++) {
-    if (pop1->fit[i] <= pop2->fit[i])
-      set_pop(pop1, pop1, pop2, i);
-    else 
-      set_pop(pop1, pop2, pop1, i);
   }
 }
 
