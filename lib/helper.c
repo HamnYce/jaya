@@ -53,7 +53,6 @@ void init_pop(pop_t *pop, double (*loss_func)(double *vec)) {
   }
 
   pop->fit = malloc(pop_s * sizeof(double));
-  pop->loss_func = loss_func;
 }
 
 double sphere(double *vec) {
