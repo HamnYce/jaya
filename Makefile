@@ -1,15 +1,19 @@
-single: compile_single run_single
+single:
+	make compile_single
+	make run_single
 
-kpop: compile_kpop run_kpop
+kpop:	
+	make compile_kpop
+	make run_kpop
 
 compile_kpop:
-	gcc -lpthread kpop.c lib/helper.c -o bin/kpop
+	gcc kpop.c lib/helper.c -lpthread -o bin/kpop
 
 run_kpop:
 	bin/kpop
 
 compile_single:
-	gcc better.c lib/helper.c -o bin/better
+	gcc single.c lib/helper.c -o bin/single
 
 run_single:
-	bin/better
+	bin/single
