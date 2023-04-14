@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-
 
 void mutate(pop_t *pop, pop_t *mutated_pop, int i);
 void fitness(pop_t *pop);
@@ -14,15 +14,14 @@ void find_best_worst(pop_t *pop);
 void mutate_pop(pop_t *pop, pop_t *mutated_pop);
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
-
 void calc_fitness(pop_t *pop) {
   for (int i = 0; i < pop_s; i++) {
-    pop->fit[i] = pop->loss_func(pop->pop_vec[i]);
+    pop->fit[i] = loss_func(pop->pop_vec[i]);
   }
 }
 
 // returns a list of the solutions
-double *jaya(double (*loss_func)(double *vec)) {
+double *jaya() {
   srand(time(NULL) * 1000);
   double *solutions = malloc(n * sizeof(double));
   pop_t *pop, *mutated_pop;
@@ -53,9 +52,12 @@ double *jaya(double (*loss_func)(double *vec)) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 4) {
-    puts("Please enter 3 arguments to this program");
-    puts("population & dimension size and max loss function evaluation count");
+  if (argc != 5) {
+    puts("Please enter 4 arguments to this program");
+    puts("population size");
+    puts("dimension size");
+    puts("max FE count");
+    puts("loss function name ('sphere', 'rosenbrock', or 'rastrigin')");
     puts("respectively");
     exit(1);
   }
@@ -63,11 +65,21 @@ int main(int argc, char **argv) {
   pop_s = atoi(argv[1]);
   d = atoi(argv[2]);
   maxfe = atoi(argv[3]);
+  char *loss_func_s = argv[4];
   n = maxfe / pop_s;
 
-  double *solution = jaya(sphere);
+  if (strcmp(loss_func_s, "sphere"))
+    loss_func = sphere;
+  else if (strcmp(loss_func_s, "rosenbrock"))
+    loss_func = rosenbrock;
+  else if (strcmp(loss_func_s, "rastrigin"))
+    loss_func = rastrigin;
+  else
+    loss_func = sphere;
 
-  char* output_file_name = malloc(100 * sizeof(char));
+  double *solution = jaya();
+
+  char *output_file_name = malloc(100 * sizeof(char));
   sprintf(output_file_name, "output/single_pop_s_%i_d_%i.out", pop_s, d);
 
   FILE *out = fopen(output_file_name, "w");
