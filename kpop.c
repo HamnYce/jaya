@@ -1,39 +1,51 @@
+#include "lib/helper.h"
 #include <float.h>
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "lib/helper.h"
 
-double *mutate(double *, double **best_worst);
-double *fitness(double (*loss)(double *vec), double **pop);
-double **get_best_worst(double **pop, double *fit);
+void mutate(pop_t *pop, pop_t *mutated_pop, int i);
+void fitness(pop_t *pop);
+void find_best_worst(pop_t *pop);
 
-double **mutate_pop(double **pop, double **best_worst);
-double **combine(double **pop1, double **pop2, double *fit1, double *fit2);
+void mutate_pop(pop_t *pop, pop_t *mutated_pop);
+void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
 double *jaya(double (*loss_func)(double *vec), int n);
 
-void *threaded_rand_vec(void *argv) {
-  pop_t *arg = (pop_t *)argv;
+void init_pop(pop_t *pop, double (*loss_func)(double *vec)) {
+  pop->pop_vec = malloc(POP_S * sizeof(double *));
 
-  for (int i = arg->start; i < arg->start + SPAN; i++) {
-    arg->pop_vec[i] = rand_vec(-B, B);
+  for (int i = 0; i < POP_S; i++) {
+    pop->pop_vec[i] = malloc(D * sizeof(double));
+  }
+
+  pop->fit = malloc(POP_S * sizeof(double));
+  pop->loss_func = loss_func;
+}
+
+void *threaded_rand_vec(void *argv) {
+  pop_t *pop = (pop_t *)argv;
+
+  for (int i = pop->start; i < pop->start + SPAN; i++) {
+    for (int j = 0; j < D; j++) {
+      pop->pop_vec[i][j] = rand_double(-B, B);
+    }
   }
 
   pthread_exit(NULL);
 }
 
-double **threaded_rand_pop() {
+void rand_pop(pop_t *pop) {
   pthread_t *ths = malloc(K * sizeof(pthread_t));
-  double **pop_vec = malloc(POP_S * sizeof(double *));
 
+  pop_t *pops = malloc(K * sizeof(pop_t));
   for (int i = 0; i < K; i++) {
-    pop_t pop;
-    pop.pop_vec = pop_vec;
-    pop.start = i * POP_S / K;
-    pthread_create(ths + i, NULL, threaded_rand_vec, &pop);
+    pops[i].pop_vec = pop->pop_vec;
+    pops[i].start = i * SPAN;
+    pthread_create(ths + i, NULL, threaded_rand_vec, pops + i);
   }
 
   for (int i = 0; i < K; i++) {
@@ -41,11 +53,11 @@ double **threaded_rand_pop() {
   }
 
   free(ths);
-  return pop_vec;
+  free(pops);
 }
 
-void* threaded_loss_func(void* args) {
-  pop_t *arg = (pop_t*) args;
+void *threaded_loss_func(void *args) {
+  pop_t *arg = (pop_t *)args;
 
   for (int i = arg->start; i < arg->start + SPAN; i++) {
     arg->fit[i] = arg->loss_func(arg->pop_vec[i]);
@@ -54,17 +66,17 @@ void* threaded_loss_func(void* args) {
   pthread_exit(NULL);
 }
 
-double* threaded_fitness(double (*loss_func)(double *vec), double** pop_vec) {
+void calc_fitness(pop_t *pop) {
   pthread_t *ths = malloc(K * sizeof(pthread_t));
-  double *fit = malloc(POP_S * sizeof(double));
+  pop->fit = malloc(POP_S * sizeof(double));
 
+  pop_t *pops = malloc(K * sizeof(pop_t));
   for (int i = 0; i < K; i++) {
-    pop_t pop;
-    pop.pop_vec = pop_vec;
-    pop.fit = fit;
-    pop.start = i * POP_S / K;
-    pop.loss_func = loss_func;
-    pthread_create(ths + i, NULL, threaded_loss_func, &pop);
+    pops[i].pop_vec = pop->pop_vec;
+    pops[i].fit = pop->fit;
+    pops[i].start = i * POP_S / K;
+    pops[i].loss_func = pop->loss_func;
+    pthread_create(ths + i, NULL, threaded_loss_func, pops + i);
   }
 
   for (int i = 0; i < K; i++) {
@@ -72,108 +84,64 @@ double* threaded_fitness(double (*loss_func)(double *vec), double** pop_vec) {
   }
 
   free(ths);
-  return fit;
 }
 
-// [solution vectors] -> [fits]
-double *fitness(double (*loss_func)(double *vec), double **pop) {
-  double *fit = malloc(POP_S * sizeof(double));
-
-  for (int i = 0; i < POP_S; i++) {
-    fit[i] = loss_func(pop[i]);
-  }
-
-  return fit;
-}
-
-// [fits] -> [lowest fit, greatest fit]
-double **get_best_worst(double **pop, double *fit) {
-  double **best_worst = malloc(2 * sizeof(double *));
-
-  double best = DBL_MAX;
-  double worst = -DBL_MAX;
-
-  for (int i = 0; i < POP_S; i++) {
-    if (fit[i] <= best) {
-      best = fit[i];
-      best_worst[0] = copy_vec(pop[i]);
-    }
-
-    if (fit[i] >= worst) {
-      worst = fit[i];
-      best_worst[1] = copy_vec(pop[i]);
-    }
-  }
-  return best_worst;
-}
-
-// solution_vector -> mutated_solution_vector
-double *mutate(double *vec, double **best_worst) {
-  double *mutated_vec = malloc(D * sizeof(double));
-
-  double *r1 = rand_vec(0, 1);
-  double *r2 = rand_vec(0, 1);
-
-  for (int i = 0; i < D; i++) {
-    mutated_vec[i] = vec[i] + (r1[i] * (best_worst[0][i] - vec[i])) -
-                     (r2[i] * (best_worst[1][i] - vec[i]));
-  }
-
-  return mutated_vec;
-}
-
-// [solutions vectors], [fits] -> [list of mutated solutions vectors]
-double **mutate_pop(double **pop, double **best_worst) {
-  double **mutated_pop = malloc(POP_S * sizeof(double **));
-
+void mutate_pop(pop_t *pop, pop_t *mutated_pop) {
   for (int i = 0; i < POP_S; i++)
-    mutated_pop[i] = mutate(pop[i], best_worst);
-
-  return mutated_pop;
+    mutate(pop, mutated_pop, i);
 }
 
-// [solution vectors], [solution vectors], [fits], [fits] -> [solution vectors]
-double **combine(double **pop1, double **pop2, double *fit1, double *fit2) {
-  double **combined_pop = malloc(POP_S * sizeof(double **));
-
-  for (int i = 0; i < POP_S; i++) {
-    if (fit1[i] <= fit2[i])
-      combined_pop[i] = copy_vec(pop1[i]);
-    else
-      combined_pop[i] = copy_vec(pop2[i]);
+void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i) {
+  for (int i = 0; i < D; i++) {
+    pop->pop_vec[vec_i][i] = better_pop->pop_vec[vec_i][i];
   }
 
-  return combined_pop;
+  pop->fit[vec_i] = better_pop->fit[vec_i];
+}
+
+void combine_into_pop(pop_t *pop1, pop_t *pop2) {
+
+  // TODO: DRY this up
+  pop1->best =
+      pop1->fit[pop1->best] <= pop2->fit[pop2->best] ? pop1->best : pop2->best;
+
+  pop1->worst = pop1->fit[pop1->worst] <= pop2->fit[pop2->worst] ? pop1->worst
+                                                                 : pop2->worst;
+
+  for (int i = 0; i < POP_S; i++) {
+    if (pop1->fit[i] <= pop2->fit[i])
+      set_pop(pop1, pop1, pop2, i);
+    else
+      set_pop(pop1, pop2, pop1, i);
+  }
 }
 
 // returns a list of the solutions
 double *jaya(double (*loss_func)(double *vec), int n) {
   srand(time(NULL) * 1000);
   double *solutions = malloc(n * sizeof(double));
-  double **pop, **mutated_pop, **new_pop, **best_worst, **mutated_best_worst;
-  double *fit, *mutated_fit;
+  pop_t *pop, *mutated_pop;
 
-  // pop = rand_pop();
+  pop = malloc(sizeof(pop_t));
+  mutated_pop = malloc(sizeof(pop_t));
+
+  init_pop(pop, loss_func);
+  init_pop(mutated_pop, loss_func);
+
+  rand_pop(pop);
+  find_best_worst(pop);
+  calc_fitness(pop);
 
   for (int i = 0; i < n; i++) {
-    // fit = fitness(loss_func, pop);
-    fit = threaded_fitness(loss_func, pop);
-    best_worst = get_best_worst(pop, fit);
+    mutate_pop(pop, mutated_pop);
 
-    mutated_pop = mutate_pop(pop, best_worst);
-    mutated_fit = fitness(loss_func, mutated_pop);
-    mutated_best_worst = get_best_worst(mutated_pop, mutated_fit);
+    calc_fitness(mutated_pop);
 
-    new_pop = combine(pop, mutated_pop, fit, mutated_fit);
+    find_best_worst(mutated_pop);
 
-    solutions[i] = loss_func(best_worst[0]);
+    combine_into_pop(pop, mutated_pop);
 
-    free_vec(fit);
-    free_vec(mutated_fit);
-    free_pop(pop);
-    free_pop(mutated_pop);
-
-    pop = new_pop;
+    solutions[i] = pop->fit[pop->best];
   }
 
   return solutions;
@@ -196,6 +164,6 @@ int main(int argc, char **argv) {
   }
   fclose(out);
 
-  printf("best:%f worst:%f\n", solution[n - 1], solution[n - 1]);
+  printf("final:%f\n", solution[n - 1]);
   return 0;
 }
