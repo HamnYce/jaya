@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "helper.h"
+#include <float.h>
 
 void free_vec(double *vec) { free(vec); }
 
@@ -14,8 +15,6 @@ void free_pop(double **pop) {
 void free_pop_t(pop_t* pop) {
   free_pop(pop->pop_vec);
   free_vec(pop->fit);
-  free_vec(pop->best);
-  free_vec(pop->worst);
   free(pop);
 }
 
@@ -68,4 +67,27 @@ double rand_double(double min, double max) {
   double offsetted_r = mapped_r - fabs(min);
 
   return offsetted_r;
+}
+
+void find_best_worst(pop_t *pop) {
+  double best = DBL_MAX;
+  double worst = -DBL_MAX;
+
+  int best_i = 0;
+  int worst_i = 0;
+
+  for (int i = 0; i < POP_S; i++) {
+    if (pop->fit[i] <= best) {
+      best_i = i;
+      best = pop->fit[i];
+    }
+
+    if (pop->fit[i] >= worst) {
+      worst_i = i;
+      worst = pop->fit[i];
+    }
+  }
+
+  pop->best = best_i;
+  pop->worst = worst_i;
 }
