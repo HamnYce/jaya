@@ -10,10 +10,10 @@ compile_kpop:
 	gcc kpop.c lib/helper.c -lpthread -o bin/kpop 
 
 run_kpop:
-	bin/kpop $(POP_S) $(D) $(MAXFE) $(K)
+	bin/kpop $(POP_S) $(D) $(MAXFE) $(LOSS) $(K)
 
 compile_single:
 	gcc single.c lib/helper.c -o bin/single 
 
 run_single:
-	bin/single $(POP_S) $(D) $(MAXFE)
+	bin/single $(POP_S) $(D) $(MAXFE) $(LOSS)
