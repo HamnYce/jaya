@@ -1,11 +1,10 @@
 #ifndef HELPER
 
-#define D 1000
-#define POP_S 1000
-#define K 10
-#define MAXFE 10000000
 #define B 30.0
-#define SPAN POP_S / K
+
+// TODO: fix this because naming is kinda werid
+// capital is like macro
+int pop_s, d, span, k, n, maxfe;
 
 typedef struct {
   double **pop_vec;
@@ -40,4 +39,6 @@ void find_best_worst(pop_t *pop);
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i);
 
+
+double *jaya(double (*loss_func)(double *vec));
 #endif

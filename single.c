@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+
 void mutate(pop_t *pop, pop_t *mutated_pop, int i);
 void fitness(pop_t *pop);
 void find_best_worst(pop_t *pop);
@@ -13,16 +14,15 @@ void find_best_worst(pop_t *pop);
 void mutate_pop(pop_t *pop, pop_t *mutated_pop);
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
-double *jaya(double (*loss_func)(double *vec), int n);
 
 void calc_fitness(pop_t *pop) {
-  for (int i = 0; i < POP_S; i++) {
+  for (int i = 0; i < pop_s; i++) {
     pop->fit[i] = pop->loss_func(pop->pop_vec[i]);
   }
 }
 
 // returns a list of the solutions
-double *jaya(double (*loss_func)(double *vec), int n) {
+double *jaya(double (*loss_func)(double *vec)) {
   srand(time(NULL) * 1000);
   double *solutions = malloc(n * sizeof(double));
   pop_t *pop, *mutated_pop;
@@ -53,17 +53,24 @@ double *jaya(double (*loss_func)(double *vec), int n) {
 }
 
 int main(int argc, char **argv) {
+  if (argc != 4) {
+    puts("Please enter 3 arguments to this program");
+    puts("population & dimension size and max loss function evaluation count");
+    puts("respectively");
+    exit(1);
+  }
 
-  // the loss function is carried on each member of a population x times
-  // then on the mutated version of that population.
-  // therefore it is carried out POP_S * 2 times per iteration
-  // FE == 2 * POP_S * (n)
-  // therefore n = FE / (2 * POP_S)
+  pop_s = atoi(argv[1]);
+  d = atoi(argv[2]);
+  maxfe = atoi(argv[3]);
+  n = maxfe / pop_s;
 
-  int n = MAXFE / (2 * POP_S);
-  double *solution = jaya(sphere, n);
+  double *solution = jaya(sphere);
 
-  FILE *out = fopen("output/single.out", "w");
+  char* output_file_name = malloc(100 * sizeof(char));
+  sprintf(output_file_name, "output/single_pop_s_%i_d_%i.out", pop_s, d);
+
+  FILE *out = fopen(output_file_name, "w");
   for (int i = 0; i < n; i++) {
     fprintf(out, "%10.20f\n", solution[i]);
   }
