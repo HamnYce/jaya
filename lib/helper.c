@@ -132,14 +132,6 @@ void mutate_pop(pop_t *pop, pop_t *mutated_pop) {
     mutate(pop, mutated_pop, i);
 }
 
-void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i) {
-  for (int i = 0; i < d; i++) {
-    pop->pop_vec[vec_i][i] = better_pop->pop_vec[vec_i][i];
-  }
-
-  pop->fit[vec_i] = better_pop->fit[vec_i];
-}
-
 void combine_into_pop(pop_t *pop1, pop_t *pop2) {
 
   // TODO: DRY this up
@@ -150,9 +142,13 @@ void combine_into_pop(pop_t *pop1, pop_t *pop2) {
                                                                  : pop2->worst;
 
   for (int i = 0; i < pop_s; i++) {
-    if (pop1->fit[i] <= pop2->fit[i])
-      set_pop(pop1, pop1, pop2, i);
-    else
-      set_pop(pop1, pop2, pop1, i);
+    if (pop1->fit[i] > pop2->fit[i]) {
+      for (int j = 0; j < d; j++) {
+        pop1->pop_vec[i][j] = pop2->pop_vec[i][j];
+      }
+
+      pop1->fit[i] = pop2->fit[i];
+    }
+
   }
 }

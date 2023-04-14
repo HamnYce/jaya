@@ -5,11 +5,11 @@
 // TODO: fix this because naming is kinda werid
 // capital is like macro
 int pop_s, d, span, k, n, maxfe;
+double (*loss_func)(double* vec);
 
 typedef struct {
   double **pop_vec;
   double *fit;
-  double (*loss_func)(double *vec);
   int best;
   int worst;
   int start;
@@ -40,5 +40,5 @@ void combine_into_pop(pop_t *pop1, pop_t *pop2);
 void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i);
 
 
-double *jaya(double (*loss_func)(double *vec));
+double *jaya();
 #endif
