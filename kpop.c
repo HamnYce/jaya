@@ -9,6 +9,7 @@
 void fitness(pop_t *pop);
 void find_best_worst(pop_t *pop);
 
+
 void mutate_pop(pop_t *pop, pop_t *mutated_pop);
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 
@@ -74,6 +75,8 @@ double *jaya(double (*loss_func)(double *vec)) {
   return solutions;
 }
 
+double (*loss_func)(double* vec);
+
 int main(int argc, char **argv) {
 
  if (argc != 5) {
@@ -90,6 +93,7 @@ int main(int argc, char **argv) {
   d = atoi(argv[2]);
   maxfe = atoi(argv[3]);
   k = atoi(argv[4]);
+  loss_func = sphere;
 
   n = maxfe / pop_s;
 

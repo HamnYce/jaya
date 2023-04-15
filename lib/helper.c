@@ -79,13 +79,13 @@ double rastrigin(double *vec) {
   return res;
 }
 
-double rand_double(double min, double max) {
-  double r = (double)rand() / (double)RAND_MAX;
-  double total_dist = fabs(min) + fabs(max);
-  double mapped_r = total_dist * r;
-  double offsetted_r = mapped_r - fabs(min);
 
-  return offsetted_r;
+double rand_double(double min, double max) {
+  double range = max - min;
+  double rand_num = (double)rand() / RAND_MAX;
+  double rand_actual = rand_num * range + min;
+
+  return rand_num * range + min;
 }
 
 void find_best_worst(pop_t *pop) {

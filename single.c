@@ -22,8 +22,15 @@ void calc_fitness(pop_t *pop) {
 
 // returns a list of the solutions
 double *jaya() {
+  char *output_file_name = malloc(100 * sizeof(char));
+  sprintf(output_file_name, "output/single_pop_s_%i_d_%i.out", pop_s, d);
+  FILE *out = fopen(output_file_name, "w");
+
   srand(time(NULL) * 1000);
-  double *solutions = malloc(n * sizeof(double));
+
+  double *best_fits = malloc(n * sizeof(double));
+  double **best_solutions = malloc(pop_s * sizeof(double *));
+
   pop_t *pop, *mutated_pop;
 
   pop = malloc(sizeof(pop_t));
@@ -45,10 +52,17 @@ double *jaya() {
 
     combine_into_pop(pop, mutated_pop);
 
-    solutions[i] = pop->fit[pop->best];
+    best_fits[i] = pop->fit[pop->best];
+
+    for (int j = 0; j < n; j++) {
+      fprintf(out, "%f ", pop->pop_vec[pop->best][j]);
+    }
+    fprintf(out, "%10.20f\n", best_fits[i]);
+    
   }
 
-  return solutions;
+  fclose(out);
+  return best_fits;
 }
 
 int main(int argc, char **argv) {
@@ -78,15 +92,6 @@ int main(int argc, char **argv) {
     loss_func = sphere;
 
   double *solution = jaya();
-
-  char *output_file_name = malloc(100 * sizeof(char));
-  sprintf(output_file_name, "output/single_pop_s_%i_d_%i.out", pop_s, d);
-
-  FILE *out = fopen(output_file_name, "w");
-  for (int i = 0; i < n; i++) {
-    fprintf(out, "%10.20f\n", solution[i]);
-  }
-  fclose(out);
 
   printf("final:%f\n", solution[n - 1]);
   return 0;
