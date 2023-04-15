@@ -30,7 +30,7 @@ void free_pop(double **pop_vec);
 void free_pop_t(pop_t *pop);
 
 void rand_pop(pop_t *pop);
-void init_pop(pop_t *pop, double (*loss_func)(double *vec));
+void init_pop(pop_t *pop);
 
 void mutate_pop(pop_t *pop, pop_t *mutated_pop);
 void mutate(pop_t *pop, pop_t *mutated_pop, int vec_i);

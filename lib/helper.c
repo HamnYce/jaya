@@ -45,7 +45,7 @@ void rand_pop(pop_t *pop) {
   }
 }
 
-void init_pop(pop_t *pop, double (*loss_func)(double *vec)) {
+void init_pop(pop_t *pop) {
   pop->pop_vec = malloc(pop_s * sizeof(double *));
 
   for (int i = 0; i < pop_s; i++) {

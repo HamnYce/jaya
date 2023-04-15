@@ -36,8 +36,8 @@ double *jaya() {
   pop = malloc(sizeof(pop_t));
   mutated_pop = malloc(sizeof(pop_t));
 
-  init_pop(pop, loss_func);
-  init_pop(mutated_pop, loss_func);
+  init_pop(pop);
+  init_pop(mutated_pop);
 
   rand_pop(pop);
   find_best_worst(pop);
@@ -53,13 +53,13 @@ double *jaya() {
     combine_into_pop(pop, mutated_pop);
 
     best_fits[i] = pop->fit[pop->best];
-
-    for (int j = 0; j < n; j++) {
-      fprintf(out, "%f ", pop->pop_vec[pop->best][j]);
-    }
-    fprintf(out, "%10.20f\n", best_fits[i]);
-    
+    fprintf(out, "%10.10f\n", best_fits[n - 1]);
   }
+
+  for (int j = 0; j < n; j++) {
+    fprintf(out, "%10.5f\n", pop->pop_vec[pop->best][j]);
+  }
+
 
   fclose(out);
   return best_fits;
@@ -82,11 +82,11 @@ int main(int argc, char **argv) {
   char *loss_func_s = argv[4];
   n = maxfe / pop_s;
 
-  if (strcmp(loss_func_s, "sphere"))
+  if (strcmp(loss_func_s, "sphere") == 0)
     loss_func = sphere;
-  else if (strcmp(loss_func_s, "rosenbrock"))
+  else if (strcmp(loss_func_s, "rosenbrock") == 0)
     loss_func = rosenbrock;
-  else if (strcmp(loss_func_s, "rastrigin"))
+  else if (strcmp(loss_func_s, "rastrigin") == 0)
     loss_func = rastrigin;
   else
     loss_func = sphere;
