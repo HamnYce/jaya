@@ -1,4 +1,3 @@
-#include "lib/helper.h"
 #include <float.h>
 #include <math.h>
 #include <pthread.h>
@@ -6,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "lib/helper.h"
+
+int pop_s, d, span, k, n, maxfe;
+double (*loss_func)(double *vec);
 
 void mutate(pop_t *pop, pop_t *mutated_pop, int i);
 void fitness(pop_t *pop);
@@ -59,7 +63,6 @@ double *jaya() {
   for (int j = 0; j < n; j++) {
     fprintf(out, "%10.5f\n", pop->pop_vec[pop->best][j]);
   }
-
 
   fclose(out);
   return best_fits;

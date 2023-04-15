@@ -1,14 +1,13 @@
 #include "helper.h"
+
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
 
-
 void free_vec(double *vec) { free(vec); }
 
 void free_pop(double **pop) {
-  for (int i = 0; i < pop_s; i++)
-    free_vec(pop[i]);
+  for (int i = 0; i < pop_s; i++) free_vec(pop[i]);
 
   free(pop);
 }
@@ -22,8 +21,7 @@ void free_pop_t(pop_t *pop) {
 double *copy_vec(double *vec) {
   double *vec_copy = malloc(d * sizeof(vec));
 
-  for (int i = 0; i < d; i++)
-    vec_copy[i] = vec[i];
+  for (int i = 0; i < d; i++) vec_copy[i] = vec[i];
 
   return vec_copy;
 }
@@ -31,8 +29,7 @@ double *copy_vec(double *vec) {
 double *rand_vec(double min, double max) {
   double *vec = malloc(d * sizeof(double));
 
-  for (int i = 0; i < d; i++)
-    vec[i] = rand_double(min, max);
+  for (int i = 0; i < d; i++) vec[i] = rand_double(min, max);
 
   return vec;
 }
@@ -57,8 +54,7 @@ void init_pop(pop_t *pop) {
 
 double sphere(double *vec) {
   double res = 0;
-  for (int i = 0; i < d; i++)
-    res += pow(vec[i], 2);
+  for (int i = 0; i < d; i++) res += pow(vec[i], 2);
 
   return res;
 }
@@ -78,7 +74,6 @@ double rastrigin(double *vec) {
 
   return res;
 }
-
 
 double rand_double(double min, double max) {
   double range = max - min;
@@ -127,12 +122,10 @@ void mutate(pop_t *pop, pop_t *mutated_pop, int vec_i) {
 }
 
 void mutate_pop(pop_t *pop, pop_t *mutated_pop) {
-  for (int i = 0; i < pop_s; i++)
-    mutate(pop, mutated_pop, i);
+  for (int i = 0; i < pop_s; i++) mutate(pop, mutated_pop, i);
 }
 
 void combine_into_pop(pop_t *pop1, pop_t *pop2) {
-
   // TODO: DRY this up
   pop1->best =
       pop1->fit[pop1->best] <= pop2->fit[pop2->best] ? pop1->best : pop2->best;
@@ -148,6 +141,5 @@ void combine_into_pop(pop_t *pop1, pop_t *pop2) {
 
       pop1->fit[i] = pop2->fit[i];
     }
-
   }
 }

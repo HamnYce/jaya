@@ -2,12 +2,11 @@
 #define HELPER
 
 #define B 30.0
+extern int pop_s, d, span, k, n, maxfe;
+extern double (*loss_func)(double *vec);
 
 // TODO: fix this because naming is kinda werid
 // capital is like macro
-int pop_s, d, span, k, n, maxfe;
-double (*loss_func)(double* vec);
-
 typedef struct {
   double **pop_vec;
   double *fit;
@@ -39,7 +38,6 @@ void find_best_worst(pop_t *pop);
 
 void combine_into_pop(pop_t *pop1, pop_t *pop2);
 void set_pop(pop_t *pop, pop_t *better_pop, pop_t *worse_pop, int vec_i);
-
 
 double *jaya();
 #endif
